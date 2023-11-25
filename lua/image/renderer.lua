@@ -1,5 +1,5 @@
-local utils = require("image/utils")
 local magick = require("image/magick")
+local utils = require("image/utils")
 
 -- Images get resized and cropped to fit in the context they are rendered in.
 -- Each of these versions are written to the temp directory and cleared on reboot (on Linux at least).
@@ -121,15 +121,20 @@ local render = function(image)
 
     -- global max window width/height percentage
     if type(state.options.max_width_window_percentage) == "number" then
-      width = math.min(width, math.floor((window.width - x_offset) * state.options.max_width_window_percentage / 100))
+      width =
+        math.min(width, math.floor((window.width - global_offsets.x) * state.options.max_width_window_percentage / 100))
     end
     if type(state.options.max_height_window_percentage) == "number" then
-      height =
-        math.min(height, math.floor((window.height - y_offset) * state.options.max_height_window_percentage / 100))
+      height = math.min(
+        height,
+        math.floor((window.height - global_offsets.y) * state.options.max_height_window_percentage / 100)
+      )
     end
   end
 
-  -- utils.debug(("(2) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(original_x, original_y, width, height, y_offset))
+  -- utils.debug(
+  --   ("(2) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(original_x, original_y, width, height, y_offset)
+  -- )
 
   -- global max width/height
   if type(state.options.max_width) == "number" then width = math.min(width, state.options.max_width) end
@@ -234,15 +239,10 @@ local render = function(image)
 
           local extmark_offset = topfill
           for _, mark in ipairs(extmarks) do
-            -- Break if we've reached the image's extmark, don't adjust for extmarks on the same
-            -- physical line but below the image's extmark
-            if mark.id == image:get_extmark_id() then break end
-            if mark.row ~= original_y then
+            if mark.row ~= original_y and mark.id ~= image:get_extmark_id() then
               -- check the mark is inside a fold, and skip adding the offset if it is
               for fold_start, fold_end in pairs(folded_ranges) do
-                if mark.row >= fold_start and mark.row < fold_end then
-                  goto continue
-                end
+                if mark.row >= fold_start and mark.row < fold_end then goto continue end
               end
               extmark_offset = extmark_offset + mark.height
             end
