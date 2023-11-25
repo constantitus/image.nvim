@@ -1,4 +1,5 @@
-local has_magick, magick = pcall(require, "magick")
+local magick = require("magick")
+local has_magick = true
 
 ---@return MagickImage
 local load_image = function(path)
